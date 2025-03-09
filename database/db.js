@@ -21,7 +21,8 @@ export async function connectToDB(){
   }
 }
 
-export function getDB(){
+export async function getDB(){
+  
   if(!db){
     throw new Error("Database not connected")
   }
