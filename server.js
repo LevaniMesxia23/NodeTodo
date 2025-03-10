@@ -11,10 +11,11 @@ async function startServer() {
 
   const server = http.createServer((req, res) => {
     handleTasksRoutes(req, res);
-  })
+  });
 
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-})}
+  server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
 
 startServer();
