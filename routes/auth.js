@@ -52,5 +52,54 @@ export async function handleAuthRoutes(req, res) {
         res.end(JSON.stringify({ message: error.message }));
       }
     });
+  } else if(req.method === "POST" && req.url === "/auth/login"){
+    let body = ""
+    req.on("data", (chunk) => {
+      body += chunk;
+    })
+
+    req.on("end", async () => {
+      try {
+        const {username, password} = JSON.parse(body)
+        if(!username || !password){
+          throw new Error("Missing required fields")
+        }
+
+        const user = await userCollection.findOne({username})
+        if(!user){
+          res.writeHead(401, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({message: "Invalid username"}))
+          return;
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password)
+        if(!isPasswordValid){
+          res.writeHead(401, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({message: "Invalid password"}))
+          return;
+        }
+
+        const token = jwt.sign(
+          {userId: user._id, username: user.username},
+          JWT_SECRET,
+          {expiresIn: "1h"}
+        )
+
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        })
+        res.end(JSON.stringify({
+          message: "Login successful",
+          token
+        }))
+      } catch (error) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({message: error.message}))
+      }
+    })
+  } else {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({message: "Not found"}))
   }
 }

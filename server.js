@@ -11,11 +11,11 @@ async function startServer() {
   await connectToDB();
 
   const server = http.createServer((req, res) => {
-    if(req.url.startsWith("/tasks")){
+    if (req.url.startsWith("/tasks")) {
       authenticate(req, res, () => {
         handleTasksRoutes(req, res);
       });
-    } else if(req.url === "/auth/register"){
+    } else if (req.url === "/auth/register" || req.url === "/auth/login") {
       handleAuthRoutes(req, res);
     } else {
       res.writeHead(404, { "Content-Type": "application/json" });
