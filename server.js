@@ -15,7 +15,7 @@ async function startServer() {
       authenticate(req, res, () => {
         handleTasksRoutes(req, res);
       });
-    } else if (req.url === "/auth/register" || req.url === "/auth/login") {
+    } else if (req.url.startsWith("/auth")) {
       handleAuthRoutes(req, res);
     } else {
       res.writeHead(404, { "Content-Type": "application/json" });

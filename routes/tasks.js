@@ -7,14 +7,18 @@ async function handleTasksRoutes(req, res) {
     const taskCollection = db.collection("tasks");
     if (req.method === "GET" && req.url.startsWith("/tasks")) {
       const urlParams = new URL(req.url, `http://${req.headers.host}`);
-      const filter = {};
+      const filter = {userId: req.user.userId};
 
       if (urlParams.searchParams.has("completed")) {
-        filter.completed = urlParams.searchParams.get("completed") === "true";
+        const completedValue = urlParams.searchParams.get("completed").toLowerCase();
+        filter.completed = completedValue === "true";
       }
 
       if (urlParams.searchParams.has("priority")) {
-        filter.priority = Number(urlParams.searchParams.get("priority"), 10);
+        const priorityValue = Number(urlParams.searchParams.get("priority"));
+        if(!isNaN(priorityValue)){
+          filter.priority = priorityValue;
+        }
       }
 
       const tasks = await taskCollection.find(filter).toArray();
@@ -31,6 +35,10 @@ async function handleTasksRoutes(req, res) {
 
       req.on("end", async () => {
         const newTask = JSON.parse(body);
+        if(!newTask.task){
+          throw new Error("Task is required")
+        }
+        newTask.userId = req.user.userId
         const result = await taskCollection.insertOne(newTask);
         res.writeHead(201, {
           "Content-Type": "application/json",
@@ -53,7 +61,7 @@ async function handleTasksRoutes(req, res) {
       req.on("end", async () => {
         const updates = JSON.parse(body);
         const result = await taskCollection.updateOne(
-          { _id: new ObjectId(taskId) },
+          { _id: new ObjectId(taskId),userId: req.user.userId},
           { $set: updates }
         );
         if (result.matchedCount === 0) {
@@ -68,6 +76,7 @@ async function handleTasksRoutes(req, res) {
       const taskId = req.url.split("/tasks/")[1];
       const result = await taskCollection.deleteOne({
         _id: new ObjectId(taskId),
+        userId: req.user.userId,
       });
       if (result.deletedCount === 0) {
         res.writeHead(404, { "Content-Type": "application/json" });
