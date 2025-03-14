@@ -13,7 +13,6 @@ export async function handleAuthRoutes(req, res) {
 
   if (req.method === "POST" && req.url === "/auth/register") {
     let body = "";
-    
     req.on("data", (chunk) => {
       body += chunk;
     });
