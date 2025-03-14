@@ -7,16 +7,19 @@ async function handleTasksRoutes(req, res) {
     const taskCollection = db.collection("tasks");
     if (req.method === "GET" && req.url.startsWith("/tasks")) {
       const urlParams = new URL(req.url, `http://${req.headers.host}`);
-      const filter = {userId: req.user.userId};
+      const filter =
+        req.user.role === "admin" ? {} : { userId: req.user.userId };
 
       if (urlParams.searchParams.has("completed")) {
-        const completedValue = urlParams.searchParams.get("completed").toLowerCase();
+        const completedValue = urlParams.searchParams
+          .get("completed")
+          .toLowerCase();
         filter.completed = completedValue === "true";
       }
 
       if (urlParams.searchParams.has("priority")) {
         const priorityValue = Number(urlParams.searchParams.get("priority"));
-        if(!isNaN(priorityValue)){
+        if (!isNaN(priorityValue)) {
           filter.priority = priorityValue;
         }
       }
@@ -35,10 +38,10 @@ async function handleTasksRoutes(req, res) {
 
       req.on("end", async () => {
         const newTask = JSON.parse(body);
-        if(!newTask.task){
-          throw new Error("Task is required")
+        if (!newTask.task) {
+          throw new Error("Task is required");
         }
-        newTask.userId = req.user.userId
+        newTask.userId = req.user.userId;
         const result = await taskCollection.insertOne(newTask);
         res.writeHead(201, {
           "Content-Type": "application/json",
@@ -60,10 +63,13 @@ async function handleTasksRoutes(req, res) {
 
       req.on("end", async () => {
         const updates = JSON.parse(body);
-        const result = await taskCollection.updateOne(
-          { _id: new ObjectId(taskId),userId: req.user.userId},
-          { $set: updates }
-        );
+        const filter =
+          req.user.role === "admin"
+            ? { _id: new ObjectId(taskId) }
+            : { _id: new ObjectId(taskId), userId: req.user.userId };
+        const result = await taskCollection.updateOne(filter, {
+          $set: updates,
+        });
         if (result.matchedCount === 0) {
           res.writeHead(404, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ message: "Task not found" }));
@@ -74,10 +80,11 @@ async function handleTasksRoutes(req, res) {
       });
     } else if (req.method === "DELETE" && req.url.startsWith("/tasks/")) {
       const taskId = req.url.split("/tasks/")[1];
-      const result = await taskCollection.deleteOne({
-        _id: new ObjectId(taskId),
-        userId: req.user.userId,
-      });
+      const filter =
+        req.user.role === "admin"
+          ? { _id: new ObjectId(taskId) }
+          : { _id: new ObjectId(taskId), userId: req.user.userId };
+      const result = await taskCollection.deleteOne(filter);
       if (result.deletedCount === 0) {
         res.writeHead(404, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ message: "Task not found" }));
