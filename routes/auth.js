@@ -182,7 +182,7 @@ export async function handleAuthRoutes(req, res) {
             $set: {
               password: hashedPassword,
               resetToken: null,
-              resetTokenExpires: null,
+              resetTokenExpiry: null,
             },
           }
         );
