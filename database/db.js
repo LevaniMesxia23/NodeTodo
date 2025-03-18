@@ -13,7 +13,9 @@ export async function connectToDB() {
     const client = new MongoClient(MONGO_URL);
     await client.connect();
     db = client.db(DB_NAME);
-    
+    await db.collection("tasks").createIndex({ userId: 1 });
+    await db.collection("tasks").createIndex({ completed: 1 });
+    await db.collection("tasks").createIndex({ priority: 1 });
     console.log("Connected to MongoDB");
   } catch (error) {
     console.log("Error connecting to MongoDB", error);
