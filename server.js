@@ -14,20 +14,26 @@ async function startServer() {
 
   const server = http.createServer((req, res) => {
     if (req.url.startsWith("/auth")) {
-      rateLimiter(req, res,() => handleAuthRoutes(req, res), 30, 15 * 60 * 1000);
+      rateLimiter(
+        req,
+        res,
+        () => handleAuthRoutes(req, res),
+        30,
+        15 * 60 * 1000
+      );
     } else {
-      rateLimiter(req, res, () => {
-        authenticate(
-          req,
-          res,
-          () => {
+      rateLimiter(
+        req,
+        res,
+        () => {
+          authenticate(req, res, () => {
             logInfo(`User ${req.user.username} accessed ${req.url}`);
             handleTasksRoutes(req, res);
-          },
-          2,
-          60 * 1000
-        );
-      });
+          });
+        },
+        60,
+        60 * 1000
+      );
     }
   });
 
@@ -36,4 +42,4 @@ async function startServer() {
   });
 }
 
-startServer();
+startServer().catch((err) => console.error("Failed to start server", err));

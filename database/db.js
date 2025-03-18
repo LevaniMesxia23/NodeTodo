@@ -13,6 +13,7 @@ export async function connectToDB() {
     const client = new MongoClient(MONGO_URL);
     await client.connect();
     db = client.db(DB_NAME);
+    
     console.log("Connected to MongoDB");
   } catch (error) {
     console.log("Error connecting to MongoDB", error);

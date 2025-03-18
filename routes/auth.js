@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import { sendResetEmail } from "../utils/email.js";
-import { logError, logInfo } from "../utils/logger.js";
+import { logInfo, logError } from "../utils/logger.js";
 
 dotenv.config();
 
