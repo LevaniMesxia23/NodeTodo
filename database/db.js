@@ -16,6 +16,7 @@ export async function connectToDB() {
     await db.collection("tasks").createIndex({ userId: 1 });
     await db.collection("tasks").createIndex({ completed: 1 });
     await db.collection("tasks").createIndex({ priority: 1 });
+    await db.collection("tasks").createIndex({ createdAt: 1 });
     console.log("Connected to MongoDB");
   } catch (error) {
     console.log("Error connecting to MongoDB", error);

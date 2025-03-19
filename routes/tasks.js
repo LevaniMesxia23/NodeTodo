@@ -7,7 +7,9 @@ async function handleTasksRoutes(req, res) {
     const db = await getDB();
     const taskCollection = db.collection("tasks");
     if (req.method === "GET" && req.url.startsWith("/tasks")) {
-      const cacheKey = `tasks_${req.user.userId}`;
+      const urlParams = new URL(req.url, `http://${req.headers.host}`);
+      const sortOrder = urlParams.searchParams.get("sort") === "asc" ? 1 : -1;
+      const cacheKey = `tasks_${req.user.userId}_sort_${sortOrder}`;
       const cachedTasks = getCache(cacheKey);
 
       if (cachedTasks) {
@@ -18,7 +20,6 @@ async function handleTasksRoutes(req, res) {
         res.end(JSON.stringify(cachedTasks));
         return;
       }
-      const urlParams = new URL(req.url, `http://${req.headers.host}`);
       const filter =
         req.user.role === "admin" ? {} : { userId: req.user.userId };
 
@@ -35,14 +36,34 @@ async function handleTasksRoutes(req, res) {
           filter.priority = priorityValue;
         }
       }
+      if (
+        urlParams.searchParams.has("startDate") ||
+        urlParams.searchParams.has("endDate")
+      ) {
+        filter.createdAt = {};
+
+        if (urlParams.searchParams.has("startDate")) {
+          filter.createdAt.$gte = new Date(
+            urlParams.searchParams.get("startDate")
+          );
+        }
+
+        if (urlParams.searchParams.has("endDate")) {
+          filter.createdAt.$lte = new Date(
+            urlParams.searchParams.get("endDate")
+          );
+        }
+      }
 
       const tasks = await taskCollection
         .find(filter)
         .project({
-          title: 1,
+          task: 1,
           completed: 1,
           priority: 1,
+          createdAt: 1,
         })
+        .sort({ createdAt: sortOrder })
         .toArray();
         setCache(cacheKey, tasks, 60);
       res.writeHead(200, {
@@ -62,6 +83,8 @@ async function handleTasksRoutes(req, res) {
           throw new Error("Task is required");
         }
         newTask.userId = req.user.userId;
+        newTask.createdAt = new Date();
+        newTask.completed = false;
         const result = await taskCollection.insertOne(newTask);
         invalidateCache(`tasks_${req.user.userId}`);
         res.writeHead(201, {
