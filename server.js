@@ -17,6 +17,7 @@ async function startServer() {
   await connectToDB();
 
   const server = http.createServer((req, res) => {
+    if (handleCors(req, res)) return;
     if (req.url.startsWith("/auth")) {
       rateLimiter(
         req,
