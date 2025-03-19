@@ -106,7 +106,7 @@ export async function handleAuthRoutes(req, res) {
           })
         );
       } catch (error) {
-        logError(`Error logging in user ${user.username}: ${error.message}`);
+        logError(`Error during login: ${error.message}`);
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ message: error.message }));
       }
